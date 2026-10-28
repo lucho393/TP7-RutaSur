@@ -2,7 +2,7 @@
 import { getDatabase } from "../../../lib/mongodb";
 import { connection } from "next/server";
 import ActualizacionEnVivo from "../../components/ActualizacionEnVivo";
-
+export const instant = false;
 
 function mostrarFecha(fecha) {
     if (!fecha) return "No disponible";

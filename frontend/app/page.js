@@ -3,11 +3,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import styles from "./page.module.css";
 
 export default function Home() {
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState("");
-
 
   useEffect(() => {
     let activo = true;
@@ -29,9 +29,7 @@ export default function Home() {
           setError("");
         }
       } catch (err) {
-        if (activo) {
-          setError(err.message);
-        }
+        if (activo) setError(err.message);
       }
     }
 
@@ -50,8 +48,8 @@ export default function Home() {
         ) {
           cargarDatos();
         }
-      } catch (error) {
-        console.error("Error al procesar evento SSE:", error);
+      } catch (err) {
+        console.error("Error al procesar evento SSE:", err);
       }
     };
 
@@ -61,10 +59,17 @@ export default function Home() {
     };
   }, []);
 
+  function clasePrioridad(prioridad) {
+    const valor = (prioridad || "").toUpperCase();
+
+    if (valor === "CRITICA") return styles.critica;
+    if (valor === "ALTA") return styles.alta;
+    return styles.media;
+  }
 
   if (error) {
     return (
-      <main style={{ padding: "30px" }}>
+      <main className={styles.contenedor}>
         <h2>Error al cargar los datos</h2>
         <p>{error}</p>
       </main>
@@ -73,124 +78,148 @@ export default function Home() {
 
   if (!datos) {
     return (
-      <main style={{ padding: "30px" }}>
+      <main className={styles.contenedor}>
         <p>Cargando datos...</p>
       </main>
     );
   }
 
   return (
-    <main
-      style={{
-        padding: "30px",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <h1>RutaSur - Torre de control</h1>
-      <p>Supervisión de envíos y alertas</p>
+    <main className={styles.contenedor}>
+      <header className={styles.encabezado}>
+        <div>
+          <span className={styles.subtitulo}>
+            PANEL DE OPERACIONES
+          </span>
+          <h1>RutaSur | Torre de control</h1>
+          <p>Monitoreo de envíos y alertas logísticas</p>
+        </div>
+        <div className={styles.acciones}>
+          <Link href="/analitica" className={styles.botonAnalitica}>
+            Ver analítica
+          </Link>
 
-      <h2>Contadores por estado</h2>
+          <span className={styles.estadoSistema}>
+            ● Monitoreo activo
+          </span>
+        </div>
+      </header>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "15px",
-          flexWrap: "wrap",
-        }}
-      >
-        {datos.contadores.map((item) => (
-          <div
-            key={item._id}
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: "8px",
-              padding: "15px",
-              minWidth: "150px",
-            }}
-          >
-            <strong>{item._id || "SIN ESTADO"}</strong>
-            <h2>{item.cantidad}</h2>
-          </div>
-        ))}
-      </div>
+      <section className={styles.seccion}>
+        <h2>Resumen de envíos</h2>
 
-      <h2>Alertas</h2>
+        <div className={styles.tarjetas}>
+          {datos.contadores.map((item) => (
+            <div
+              key={item._id || "sin-estado"}
+              className={styles.tarjeta}
+            >
+              <span className={styles.nombreEstado}>
+                {item._id || "SIN ESTADO"}
+              </span>
+              <strong className={styles.cantidad}>
+                {item.cantidad}
+              </strong>
+              <span className={styles.descripcion}>
+                Envíos registrados
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
 
-      <table
-        border="1"
-        cellPadding="10"
-        style={{ width: "100%" }}
-      >
-        <thead>
-          <tr>
-            <th>Envío</th>
-            <th>Tipo</th>
-            <th>Severidad</th>
-          </tr>
-        </thead>
+      <section className={styles.seccion}>
+        <div className={styles.tituloSeccion}>
+          <h2>Alertas logísticas</h2>
+          <span>{datos.alertas.length} registros</span>
+        </div>
 
-        <tbody>
-          {datos.alertas.length === 0 ? (
-            <tr>
-              <td colSpan="3">No hay alertas registradas.</td>
-            </tr>
-          ) : (
-            datos.alertas.map((alerta) => (
-              <tr key={String(alerta._id)}>
-                <td>{alerta.shipmentId || "-"}</td>
-                <td>{alerta.regla || "-"}</td>
-                <td>{alerta.prioridad || "-"}</td>
+        <div className={styles.tablaContenedor}>
+          <table className={styles.tabla}>
+            <thead>
+              <tr>
+                <th>Envío</th>
+                <th>Tipo de alerta</th>
+                <th>Prioridad</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {datos.alertas.length === 0 ? (
+                <tr>
+                  <td colSpan={3}>
+                    No hay alertas registradas.
+                  </td>
+                </tr>
+              ) : (
+                datos.alertas.map((alerta) => (
+                  <tr key={String(alerta._id)}>
+                    <td>{alerta.shipmentId || "-"}</td>
+                    <td>{alerta.regla || "-"}</td>
+                    <td>
+                      <span
+                        className={`${styles.etiqueta} ${clasePrioridad(
+                          alerta.prioridad
+                        )}`}
+                      >
+                        {alerta.prioridad || "-"}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      <h2>Últimos envíos actualizados</h2>
+      <section className={styles.seccion}>
+        <div className={styles.tituloSeccion}>
+          <h2>Últimos movimientos</h2>
+          <span>{datos.envios.length} envíos</span>
+        </div>
 
-      <table
-        border="1"
-        cellPadding="10"
-        style={{ width: "100%" }}
-      >
-        <thead>
-          <tr>
-            <th>ID del envío</th>
-            <th>Estado</th>
-            <th>Última secuencia</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {datos.envios.length === 0 ? (
-            <tr>
-              <td colSpan="3">No hay envíos registrados.</td>
-            </tr>
-          ) : (
-            datos.envios.map((envio) => (
-              <tr key={String(envio._id)}>
-                <td>
-                  <Link
-                    href={`/envios/${encodeURIComponent(envio.shipmentId)}`}
-                    style={{
-                      color: "#0066cc",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {envio.shipmentId}
-                  </Link>
-                </td>
-
-                <td>{envio.estado || "-"}</td>
-
-                <td>{envio.ultimaSecuencia ?? "-"}</td>
+        <div className={styles.tablaContenedor}>
+          <table className={styles.tabla}>
+            <thead>
+              <tr>
+                <th>Número de seguimiento</th>
+                <th>Estado actual</th>
+                <th>Secuencia</th>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              {datos.envios.length === 0 ? (
+                <tr>
+                  <td colSpan={3}>
+                    No hay envíos registrados.
+                  </td>
+                </tr>
+              ) : (
+                datos.envios.map((envio) => (
+                  <tr key={String(envio._id)}>
+                    <td>
+                      <Link
+                        href={`/envios/${encodeURIComponent(
+                          envio.shipmentId
+                        )}`}
+                        className={styles.enlace}
+                      >
+                        {envio.shipmentId}
+                      </Link>
+                    </td>
+                    <td>
+                      <span className={styles.estadoEnvio}>
+                        {envio.estado || "-"}
+                      </span>
+                    </td>
+                    <td>{envio.ultimaSecuencia ?? "-"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   );
 }

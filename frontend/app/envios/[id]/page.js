@@ -2,8 +2,10 @@
 import Link from "next/link";
 import { getDatabase } from "../../../lib/mongodb";
 import ActualizacionEnVivo from "../../components/ActualizacionEnVivo";
+import styles from "./detalle.module.css";
 
 export const instant = false;
+
 function mostrarFecha(fecha) {
     if (!fecha) return "-";
 
@@ -26,9 +28,11 @@ export default async function DetalleEnvio({ params }) {
 
     if (!envio) {
         return (
-            <main style={{ padding: 30 }}>
+            <main className={styles.contenedor}>
                 <ActualizacionEnVivo shipmentId={id} />
-                <Link href="/">← Volver a Torre de control</Link>
+                <Link href="/" className={styles.volver}>
+                    ← Volver a Torre de control
+                </Link>
                 <h1>Envío no encontrado</h1>
                 <p>No existe el envío {id}.</p>
             </main>
@@ -40,83 +44,139 @@ export default async function DetalleEnvio({ params }) {
     );
 
     return (
-        <main style={{ padding: 30, fontFamily: "Arial, sans-serif" }}>
+        <main className={styles.contenedor}>
             <ActualizacionEnVivo shipmentId={id} />
 
-            <Link href="/">← Volver a Torre de control</Link>
+            <Link href="/" className={styles.volver}>
+                ← Volver a Torre de control
+            </Link>
 
-            <h1>Detalle del envío</h1>
+            <header className={styles.encabezado}>
+                <span className={styles.subtitulo}>SEGUIMIENTO LOGÍSTICO</span>
+                <h1>Detalle del envío</h1>
+                <p>Información y movimientos del paquete</p>
+            </header>
 
-            <p><strong>ID:</strong> {envio.shipmentId}</p>
-            <p><strong>Estado actual:</strong> {envio.estado}</p>
-            <p>
-                <strong>Última actualización:</strong>{" "}
-                {mostrarFecha(envio.actualizadoEn)}
-            </p>
+            <section className={styles.resumen}>
+                <div>
+                    <span className={styles.etiqueta}>NÚMERO DE SEGUIMIENTO</span>
+                    <p className={styles.identificador}>{envio.shipmentId}</p>
+                </div>
 
-            <h2>Línea de tiempo</h2>
+                <div>
+                    <span className={styles.etiqueta}>ESTADO ACTUAL</span>
+                    <p>
+                        <span className={styles.estado}>
+                            {envio.estado || "SIN ESTADO"}
+                        </span>
+                    </p>
+                </div>
 
-            {historial.length === 0 ? (
-                <p>No hay eventos registrados.</p>
-            ) : (
-                <ol>
-                    {historial.map((evento, indice) => (
-                        <li key={evento.eventId || indice}>
-                            <strong>{evento.tipo}</strong>
-                            <p>Fecha: {mostrarFecha(evento.ocurridoEn)}</p>
-                            <p>Secuencia: {evento.secuencia ?? "-"}</p>
-                        </li>
-                    ))}
-                </ol>
-            )}
+                <div>
+                    <span className={styles.etiqueta}>ÚLTIMA ACTUALIZACIÓN</span>
+                    <p className={styles.valor}>
+                        {mostrarFecha(envio.actualizadoEn)}
+                    </p>
+                </div>
+            </section>
 
-            <h2>Intentos de entrega</h2>
+            <section className={styles.seccion}>
+                <h2>Línea de tiempo</h2>
 
-            {(envio.intentos || []).length === 0 ? (
-                <p>No hay intentos registrados.</p>
-            ) : (
-                <ul>
-                    {envio.intentos.map((intento, indice) => (
-                        <li key={indice}>
-                            Intento {intento.intento ?? indice + 1} —
-                            Motivo: {intento.motivo || "-"} —
-                            Fecha: {mostrarFecha(intento.ocurridoEn)}
-                        </li>
-                    ))}
-                </ul>
-            )}
+                <div className={styles.panel}>
+                    {historial.length === 0 ? (
+                        <p>No hay eventos registrados.</p>
+                    ) : (
+                        <ol className={styles.timeline}>
+                            {historial.map((evento, indice) => (
+                                <li
+                                    key={evento.eventId || indice}
+                                    className={styles.evento}
+                                >
+                                    <div className={styles.punto}></div>
 
-            <h2>Alertas del envío</h2>
+                                    <div className={styles.eventoContenido}>
+                                        <strong>{evento.tipo}</strong>
+                                        <span>{mostrarFecha(evento.ocurridoEn)}</span>
+                                        <small>Secuencia {evento.secuencia ?? "-"}</small>
+                                    </div>
+                                </li>
+                            ))}
+                        </ol>
+                    )}
+                </div>
+            </section>
 
-            {alertas.length === 0 ? (
-                <p>No hay alertas registradas.</p>
-            ) : (
-                <ul>
-                    {alertas.map((alerta) => (
-                        <li key={String(alerta._id)}>
-                            {alerta.regla || "Alerta"} —
-                            {alerta.prioridad || "Sin prioridad"}
-                        </li>
-                    ))}
-                </ul>
-            )}
+            <section className={styles.seccion}>
+                <h2>Intentos de entrega</h2>
 
-            <h2>Notificaciones del envío</h2>
+                <div className={styles.panel}>
+                    {(envio.intentos || []).length === 0 ? (
+                        <p>No hay intentos registrados.</p>
+                    ) : (
+                        <ul className={styles.lista}>
+                            {envio.intentos.map((intento, indice) => (
+                                <li key={indice}>
+                                    <strong>
+                                        Intento {intento.intento ?? indice + 1}
+                                    </strong>
+                                    <span>Motivo: {intento.motivo || "-"}</span>
+                                    <span>
+                                        Fecha: {mostrarFecha(intento.ocurridoEn)}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </section>
 
-            {notificaciones.length === 0 ? (
-                <p>No hay notificaciones registradas.</p>
-            ) : (
-                <ul>
-                    {notificaciones.map((notificacion) => (
-                        <li key={String(notificacion._id)}>
-                            {notificacion.tipo || "Notificación"} —
-                            {mostrarFecha(
-                                notificacion.ocurridoEn || notificacion.enviadoEn
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            )}
+            <section className={styles.seccion}>
+                <h2>Alertas del envío</h2>
+
+                <div className={styles.panel}>
+                    {alertas.length === 0 ? (
+                        <p>No hay alertas registradas.</p>
+                    ) : (
+                        <ul className={styles.lista}>
+                            {alertas.map((alerta) => (
+                                <li key={String(alerta._id)}>
+                                    <strong>{alerta.regla || "Alerta"}</strong>
+                                    <span>
+                                        Prioridad: {alerta.prioridad || "Sin prioridad"}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </section>
+
+            <section className={styles.seccion}>
+                <h2>Notificaciones del envío</h2>
+
+                <div className={styles.panel}>
+                    {notificaciones.length === 0 ? (
+                        <p>No hay notificaciones registradas.</p>
+                    ) : (
+                        <ul className={styles.lista}>
+                            {notificaciones.map((notificacion) => (
+                                <li key={String(notificacion._id)}>
+                                    <strong>
+                                        {notificacion.tipo || "Notificación"}
+                                    </strong>
+                                    <span>
+                                        {mostrarFecha(
+                                            notificacion.ocurridoEn ||
+                                            notificacion.enviadoEn
+                                        )}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </div>
+            </section>
         </main>
     );
 }
